@@ -101,22 +101,18 @@ def get_who_data():
 @app.get("/outbreak-alerts")
 def get_outbreak_alerts():
 
-    try:
-        feed = feedparser.parse("https://promedmail.org/rss")
+    feed = feedparser.parse("https://promedmail.org/rss")
 
-        alerts = []
+    alerts = []
 
-        for entry in feed.entries[:10]:
-            alerts.append({
-                "title": entry.title,
-                "link": entry.link
-            })
+    for entry in feed.entries[:10]:
+        alerts.append({
+            "title": entry.title,
+            "link": entry.link
+        })
 
-        return alerts
-
-    except Exception as e:
-        return {"error": str(e)}
-
+    return alerts
+    
 # -------------------------------
 # CDC FluView
 # -------------------------------
@@ -124,21 +120,17 @@ def get_outbreak_alerts():
 @app.get("/fluview")
 def get_fluview():
 
-    try:
-        feed = feedparser.parse("https://www.cdc.gov/flu/weekly/rss.xml")
+    feed = feedparser.parse("https://tools.cdc.gov/api/v2/resources/media/132608.rss")
 
-        reports = []
+    reports = []
 
-        for entry in feed.entries[:10]:
-            reports.append({
-                "title": entry.title,
-                "link": entry.link
-            })
+    for entry in feed.entries[:10]:
+        reports.append({
+            "title": entry.title,
+            "link": entry.link
+        })
 
-        return reports
-
-    except Exception as e:
-        return {"error": str(e)}
+    return reports
 
 # -------------------------------
 # HealthMap Alerts
@@ -148,20 +140,25 @@ def get_fluview():
 def get_healthmap_alerts():
 
     try:
-        feed = feedparser.parse("https://healthmap.org/en/feed/")
+
+        url = "https://healthmap.org/HMapi.php?format=json"
+
+        response = requests.get(url)
+
+        data = response.json()
 
         alerts = []
 
-        for entry in feed.entries[:10]:
+        for item in data[:10]:
             alerts.append({
-                "title": entry.title,
-                "link": entry.link
+                "title": item.get("title"),
+                "link": item.get("url")
             })
 
         return alerts
 
-    except Exception as e:
-        return {"error": str(e)}
+    except:
+        return []
 
 # -------------------------------
 # IHME INDIA DATA
