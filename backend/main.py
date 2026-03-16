@@ -47,22 +47,18 @@ def covid_country(country: str):
 @app.get("/cdc-data")
 def get_cdc_data():
 
-    url = "https://data.cdc.gov/resource/9mfq-cb36.json?$limit=20"
+    url = "https://data.cdc.gov/resource/9mfq-cb36.json"
 
     headers = {
-        "User-Agent": "Mozilla/5.0"
+        "User-Agent": "MedFusion-App"
     }
 
-    try:
-        response = requests.get(url, headers=headers, timeout=10)
+    response = requests.get(url, headers=headers, timeout=10)
 
-        if response.status_code != 200:
-            return {"error": "CDC API unavailable"}
+    if response.status_code != 200:
+        return {"error": "CDC API unavailable"}
 
-        return response.json()
-
-    except:
-        return {"error": "CDC data unavailable"}
+    return response.json()[:20]
 
 
 # ------------------------------------------------
@@ -72,23 +68,20 @@ def get_cdc_data():
 @app.get("/who-data")
 def get_who_data():
 
-    url = "https://ghoapi.azureedge.net/api/IndicatorData?$top=20"
+    url = "https://ghoapi.azureedge.net/api/IndicatorData"
 
-    try:
-        response = requests.get(url, timeout=10)
+    headers = {
+        "User-Agent": "MedFusion-App"
+    }
 
-        if response.status_code != 200:
-            return {"error": "WHO API unavailable"}
+    response = requests.get(url, headers=headers, timeout=10)
 
-        data = response.json()
+    if response.status_code != 200:
+        return {"error": "WHO API unavailable"}
 
-        if "value" in data:
-            return data["value"]
+    data = response.json()
 
-        return []
-
-    except:
-        return {"error": "WHO data unavailable"}
+    return data.get("value", [])[:20]
 
 
 # ------------------------------------------------
@@ -163,10 +156,10 @@ def get_ihme_india():
     try:
         df = pd.read_csv(url)
 
-        return df.head(20).to_dict(orient="records")
+        return df.head(20).fillna("").to_dict(orient="records")
 
     except:
-        return {"error": "IHME dataset unavailable"}
+        return {"error": "IHME data unavailable"}
 
 
 # ------------------------------------------------
@@ -199,15 +192,17 @@ def get_ecdc_data():
 @app.get("/uk-health")
 def get_uk_health():
 
-    url = "https://api.coronavirus.data.gov.uk/v1/data?filters=areaType=nation&structure={\"date\":\"date\",\"cases\":\"newCasesByPublishDate\"}"
+    url = "https://api.coronavirus.data.gov.uk/v1/data"
 
-    try:
-        response = requests.get(url, timeout=10)
+    headers = {
+        "User-Agent": "MedFusion-App"
+    }
 
-        if response.status_code != 200:
-            return {"error": "UK API unavailable"}
+    response = requests.get(url, headers=headers, timeout=10)
 
-        return response.json()
-
-    except:
+    if response.status_code != 200:
         return {"error": "UK API unavailable"}
+
+    data = response.json()
+
+    return data.get("data", [])[:20]
