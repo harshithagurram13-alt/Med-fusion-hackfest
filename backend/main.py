@@ -67,28 +67,29 @@ def get_cdc_data():
 def get_who_data():
 
     try:
+        url = "https://api.worldbank.org/v2/country/all/indicator/SP.DYN.LE00.IN?format=json"
 
-        url = "https://covid.ourworldindata.org/data/owid-covid-data.json"
-
-        response = requests.get(url)
+        response = requests.get(
+            url,
+            headers={"User-Agent": "Mozilla/5.0"},
+            timeout=10
+        )
 
         data = response.json()
 
-        records = []
+        # data[1] contains the records
+        records = data[1]
 
-        for country, values in data.items():
+        results = []
 
-            latest = values.get("data", [])[-1] if values.get("data") else {}
-
-            records.append({
-                "country": values.get("location"),
-                "date": latest.get("date"),
-                "total_cases": latest.get("total_cases"),
-                "total_deaths": latest.get("total_deaths"),
-                "total_vaccinations": latest.get("total_vaccinations")
+        for item in records[:20]:
+            results.append({
+                "country": item.get("country", {}).get("value"),
+                "year": item.get("date"),
+                "life_expectancy": item.get("value")
             })
 
-        return records[:20]
+        return results
 
     except Exception as e:
         return {"error": f"WHO data failed: {str(e)}"}
