@@ -67,13 +67,13 @@ def get_cdc_data():
 def get_who_data():
 
     try:
-        url = "https://ghoapi.azureedge.net/api/IndicatorData"
+        url = "https://ghoapi.azureedge.net/api/IndicatorData?$top=20"
 
-        response = requests.get(url, headers=headers, timeout=10)
+        response = requests.get(url, headers={"User-Agent": "Mozilla/5.0"})
 
         data = response.json()
 
-        return data.get("value", [])[:20]
+        return data.get("value", [])
 
     except Exception as e:
         return {"error": f"WHO API failed: {str(e)}"}
@@ -157,7 +157,11 @@ def get_ihme_india():
     try:
         url = "https://ghdx.healthdata.org/sites/default/files/record-attached-files/IHME_GBD_2019_INDIA_DATA.csv"
 
-        df = pd.read_csv(url)
+        headers = {"User-Agent": "Mozilla/5.0"}
+
+        response = requests.get(url, headers=headers)
+
+        df = pd.read_csv(pd.compat.StringIO(response.text))
 
         return df.head(20).fillna("").to_dict(orient="records")
 
@@ -174,11 +178,13 @@ def get_ecdc_data():
     try:
         url = "https://opendata.ecdc.europa.eu/covid19/casedistribution/json/"
 
-        response = requests.get(url, headers=headers, timeout=10)
+        response = requests.get(url, headers={"User-Agent": "Mozilla/5.0"})
 
         data = response.json()
 
-        return data[:20]
+        records = data.get("records", [])
+
+        return records[:20]
 
     except Exception as e:
         return {"error": str(e)}
@@ -191,11 +197,13 @@ def get_ecdc_data():
 def get_uk_health():
 
     try:
-        url = "https://api.coronavirus.data.gov.uk/v1/data"
+        url = "https://api.coronavirus.data.gov.uk/v2/data?areaType=nation&metric=newCasesByPublishDate"
 
-        response = requests.get(url, headers=headers, timeout=10)
+        response = requests.get(url, headers={"User-Agent": "Mozilla/5.0"})
 
-        return response.json()
+        data = response.json()
+
+        return data.get("data", [])[:20]
 
     except Exception as e:
         return {"error": f"UK API failed: {str(e)}"}
