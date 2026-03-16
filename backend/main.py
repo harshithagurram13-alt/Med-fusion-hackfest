@@ -67,13 +67,17 @@ def get_cdc_data():
 def get_who_data():
 
     try:
+
         url = "https://ghoapi.azureedge.net/api/IndicatorData?$top=20"
 
-        response = requests.get(url, headers={"User-Agent": "Mozilla/5.0"})
+        response = requests.get(
+            url,
+            headers={"User-Agent": "Mozilla/5.0"}
+        )
 
         data = response.json()
 
-        return data.get("value", [])
+        return data.get("value", [])[:20]
 
     except Exception as e:
         return {"error": f"WHO API failed: {str(e)}"}
@@ -155,15 +159,17 @@ def get_healthmap_alerts():
 def get_ihme_india():
 
     try:
-        url = "https://ghdx.healthdata.org/sites/default/files/record-attached-files/IHME_GBD_2019_INDIA_DATA.csv"
 
-        headers = {"User-Agent": "Mozilla/5.0"}
+        url = "https://api.worldbank.org/v2/country/IND/indicator/SP.DYN.LE00.IN?format=json"
 
-        response = requests.get(url, headers=headers)
+        response = requests.get(
+            url,
+            headers={"User-Agent": "Mozilla/5.0"}
+        )
 
-        df = pd.read_csv(pd.compat.StringIO(response.text))
+        data = response.json()
 
-        return df.head(20).fillna("").to_dict(orient="records")
+        return data[1][:20]
 
     except Exception as e:
         return {"error": f"IHME failed: {str(e)}"}
@@ -197,13 +203,17 @@ def get_ecdc_data():
 def get_uk_health():
 
     try:
-        url = "https://api.coronavirus.data.gov.uk/v2/data?areaType=nation&metric=newCasesByPublishDate"
 
-        response = requests.get(url, headers={"User-Agent": "Mozilla/5.0"})
+        url = "https://api.worldbank.org/v2/country/GBR/indicator/SP.DYN.LE00.IN?format=json"
+
+        response = requests.get(
+            url,
+            headers={"User-Agent": "Mozilla/5.0"}
+        )
 
         data = response.json()
 
-        return data.get("data", [])[:20]
+        return data[1][:20]
 
     except Exception as e:
         return {"error": f"UK API failed: {str(e)}"}
