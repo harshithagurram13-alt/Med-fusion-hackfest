@@ -5,179 +5,162 @@ import pandas as pd
 
 app = FastAPI(title="MedFusion Disease Surveillance API")
 
-TIMEOUT = 10
-
-
-# -----------------------------------
+# ------------------------------------------------
 # Root
-# -----------------------------------
+# ------------------------------------------------
 
 @app.get("/")
 def root():
     return {"message": "MedFusion API Running"}
 
 
-# -----------------------------------
+# ------------------------------------------------
 # Disease.sh Global Stats
-# -----------------------------------
+# ------------------------------------------------
 
 @app.get("/covid/{country}")
 def covid_country(country: str):
 
-    try:
+    url = f"https://disease.sh/v3/covid-19/countries/{country}"
 
-        url = f"https://disease.sh/v3/covid-19/countries/{country}"
+    response = requests.get(url, timeout=10)
 
-        response = requests.get(url, timeout=TIMEOUT)
+    if response.status_code != 200:
+        return {"error": "Country not found"}
 
-        if response.status_code != 200:
-            return {"error": "Country not found"}
+    data = response.json()
 
-        data = response.json()
-
-        return {
-            "country": data.get("country"),
-            "cases": data.get("cases"),
-            "today_cases": data.get("todayCases"),
-            "deaths": data.get("deaths"),
-            "recovered": data.get("recovered"),
-            "active": data.get("active")
-        }
-
-    except:
-        return {"error": "Disease API unavailable"}
+    return {
+        "country": data.get("country"),
+        "cases": data.get("cases"),
+        "today_cases": data.get("todayCases"),
+        "deaths": data.get("deaths"),
+        "recovered": data.get("recovered"),
+        "active": data.get("active")
+    }
 
 
-# -----------------------------------
+# ------------------------------------------------
 # CDC Open Data
-# -----------------------------------
+# ------------------------------------------------
 
 @app.get("/cdc-data")
 def get_cdc_data():
 
+    url = "https://data.cdc.gov/resource/9mfq-cb36.json?$limit=20"
+
+    headers = {
+        "User-Agent": "Mozilla/5.0"
+    }
+
     try:
-
-        url = "https://data.cdc.gov/resource/9mfq-cb36.json"
-
-        response = requests.get(url, timeout=TIMEOUT)
+        response = requests.get(url, headers=headers, timeout=10)
 
         if response.status_code != 200:
-            return {"error": "CDC API error"}
+            return {"error": "CDC API unavailable"}
 
-        return response.json()[:20]
+        return response.json()
 
     except:
-        return {"error": "CDC API unavailable"}
+        return {"error": "CDC data unavailable"}
 
+
+# ------------------------------------------------
+# WHO Global Health Observatory
+# ------------------------------------------------
 
 @app.get("/who-data")
 def get_who_data():
 
+    url = "https://ghoapi.azureedge.net/api/IndicatorData?$top=20"
+
     try:
-
-        url = "https://ghoapi.azureedge.net/api/IndicatorData"
-
-        response = requests.get(url, timeout=15)
+        response = requests.get(url, timeout=10)
 
         if response.status_code != 200:
-            return []
+            return {"error": "WHO API unavailable"}
 
         data = response.json()
 
         if "value" in data:
-            return data["value"][:20]
+            return data["value"]
 
         return []
 
     except:
-        return []
+        return {"error": "WHO data unavailable"}
 
-# -----------------------------------
+
+# ------------------------------------------------
 # ProMED Outbreak Alerts
-# -----------------------------------
+# ------------------------------------------------
 
 @app.get("/outbreak-alerts")
 def get_outbreak_alerts():
 
-    try:
+    feed = feedparser.parse("https://promedmail.org/promed-posts/feed/")
 
-        feed = feedparser.parse("https://promedmail.org/promed-posts/feed/")
+    alerts = []
 
-        alerts = []
+    for entry in feed.entries[:10]:
+        alerts.append({
+            "title": entry.title,
+            "link": entry.link
+        })
 
-        for entry in feed.entries[:10]:
-            alerts.append({
-                "title": entry.title,
-                "link": entry.link
-            })
-
-        return alerts
-
-    except:
-        return {"error": "ProMED feed unavailable"}
+    return alerts
 
 
-# -----------------------------------
+# ------------------------------------------------
 # CDC FluView Influenza Surveillance
-# -----------------------------------
+# ------------------------------------------------
 
 @app.get("/fluview")
 def get_fluview():
 
-    try:
+    feed = feedparser.parse("https://www.cdc.gov/flu/weekly/rss.xml")
 
-        feed = feedparser.parse("https://www.cdc.gov/flu/weekly/rss.xml")
+    reports = []
 
-        reports = []
+    for entry in feed.entries[:10]:
+        reports.append({
+            "title": entry.title,
+            "link": entry.link
+        })
 
-        for entry in feed.entries[:10]:
-            reports.append({
-                "title": entry.title,
-                "link": entry.link
-            })
-
-        return reports
-
-    except:
-        return {"error": "FluView unavailable"}
+    return reports
 
 
-# -----------------------------------
+# ------------------------------------------------
 # HealthMap Outbreak Monitoring
-# -----------------------------------
+# ------------------------------------------------
 
 @app.get("/healthmap-alerts")
 def get_healthmap_alerts():
 
-    try:
+    feed = feedparser.parse("https://healthmap.org/en/feed/")
 
-        feed = feedparser.parse("https://healthmap.org/en/feed/")
+    alerts = []
 
-        alerts = []
+    for entry in feed.entries[:10]:
+        alerts.append({
+            "title": entry.title,
+            "link": entry.link
+        })
 
-        for entry in feed.entries[:10]:
-            alerts.append({
-                "title": entry.title,
-                "link": entry.link
-            })
-
-        return alerts
-
-    except:
-        return {"error": "HealthMap unavailable"}
+    return alerts
 
 
-# -----------------------------------
+# ------------------------------------------------
 # IHME India Health Data
-# -----------------------------------
+# ------------------------------------------------
 
 @app.get("/ihme-india")
 def get_ihme_india():
 
+    url = "https://ghdx.healthdata.org/sites/default/files/record-attached-files/IHME_GBD_2019_INDIA_DATA.csv"
+
     try:
-
-        url = "https://ghdx.healthdata.org/sites/default/files/record-attached-files/IHME_GBD_2019_INDIA_DATA.csv"
-
         df = pd.read_csv(url)
 
         return df.head(20).to_dict(orient="records")
@@ -186,48 +169,43 @@ def get_ihme_india():
         return {"error": "IHME dataset unavailable"}
 
 
-# -----------------------------------
+# ------------------------------------------------
 # ECDC Disease Surveillance
-# -----------------------------------
+# ------------------------------------------------
 
 @app.get("/ecdc-data")
 def get_ecdc_data():
 
+    url = "https://opendata.ecdc.europa.eu/covid19/casedistribution/json/"
+
     try:
-
-        url = "https://opendata.ecdc.europa.eu/covid19/casedistribution/json/"
-
-        response = requests.get(url, timeout=TIMEOUT)
+        response = requests.get(url, timeout=10)
 
         if response.status_code != 200:
-            return {"error": "ECDC API error"}
+            return {"error": "ECDC data unavailable"}
 
         data = response.json()
 
-        if isinstance(data, list):
-            return data[:20]
-
-        return data
+        return data[:20]
 
     except:
-        return {"error": "ECDC API unavailable"}
+        return {"error": "ECDC data unavailable"}
 
 
-# -----------------------------------
+# ------------------------------------------------
 # UK Government Health Statistics
-# -----------------------------------
+# ------------------------------------------------
 
 @app.get("/uk-health")
 def get_uk_health():
 
+    url = "https://api.coronavirus.data.gov.uk/v1/data?filters=areaType=nation&structure={\"date\":\"date\",\"cases\":\"newCasesByPublishDate\"}"
+
     try:
-
-        url = "https://api.coronavirus.data.gov.uk/v1/data"
-
-        response = requests.get(url, timeout=TIMEOUT)
+        response = requests.get(url, timeout=10)
 
         if response.status_code != 200:
-            return {"error": "UK API error"}
+            return {"error": "UK API unavailable"}
 
         return response.json()
 
