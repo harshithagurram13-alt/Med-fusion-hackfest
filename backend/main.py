@@ -101,7 +101,9 @@ def get_who_data():
 @app.get("/outbreak-alerts")
 def get_outbreak_alerts():
 
-    feed = feedparser.parse("https://promedmail.org/rss")
+    url = "https://promedmail.org/rss"
+
+    feed = feedparser.parse(url)
 
     alerts = []
 
@@ -143,7 +145,10 @@ def get_healthmap_alerts():
 
         url = "https://healthmap.org/HMapi.php?format=json"
 
-        response = requests.get(url)
+        response = requests.get(
+            url,
+            headers={"User-Agent": "Mozilla/5.0"}
+        )
 
         data = response.json()
 
