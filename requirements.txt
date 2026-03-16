@@ -1,0 +1,7 @@
+fastapi
+uvicorn
+requests
+feedparser
+pandas
+streamlit
+pydeck
