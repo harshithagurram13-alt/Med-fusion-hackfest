@@ -20,7 +20,7 @@ st.caption(
 "Real-time monitoring integrating CDC, WHO, Disease.sh, HealthMap and global surveillance datasets"
 )
 
-backend = "https://med-fusion-hackfest.onrender.com"
+backend = "https://med-fusion-hackfest-1.onrender.com"
 
 # ------------------------------------------------
 # SIDEBAR CONTROLS
