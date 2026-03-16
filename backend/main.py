@@ -68,19 +68,30 @@ def get_who_data():
 
     try:
 
-        url = "https://ghoapi.azureedge.net/api/IndicatorData?$top=20"
+        url = "https://covid.ourworldindata.org/data/owid-covid-data.json"
 
-        response = requests.get(
-            url,
-            headers={"User-Agent": "Mozilla/5.0"}
-        )
+        response = requests.get(url)
 
         data = response.json()
 
-        return data.get("value", [])[:20]
+        records = []
+
+        for country, values in data.items():
+
+            latest = values.get("data", [])[-1] if values.get("data") else {}
+
+            records.append({
+                "country": values.get("location"),
+                "date": latest.get("date"),
+                "total_cases": latest.get("total_cases"),
+                "total_deaths": latest.get("total_deaths"),
+                "total_vaccinations": latest.get("total_vaccinations")
+            })
+
+        return records[:20]
 
     except Exception as e:
-        return {"error": f"WHO API failed: {str(e)}"}
+        return {"error": f"WHO data failed: {str(e)}"}
 
 # -------------------------------
 # ProMED Alerts
